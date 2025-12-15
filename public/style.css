@@ -9,7 +9,7 @@ body {
   margin: 0;
 }
 
-/* títulos */
+
 h1, h3, h5 {
   font-weight: 700;
 }
@@ -62,7 +62,7 @@ canvas {
     align-items: center;
 }
 
-/* grupo (label + select) */
+
 .filter-group {
   display: flex;
   flex-direction: column;
@@ -70,7 +70,7 @@ canvas {
   min-width: 160px;
 }
 
-/* label */
+
 .filter-label {
   font-size: 0.7rem;
   color: #b3b3b3;
@@ -78,7 +78,7 @@ canvas {
   letter-spacing: 0.08em;
 }
 
-/* select custom */
+
 .filter-select {
   appearance: none;
   background-color: #121212;
@@ -97,12 +97,12 @@ canvas {
   background-size: 12px;
 }
 
-/* hover */
+
 .filter-select:hover {
   border-color: #1db954;
 }
 
-/* focus */
+
 .filter-select:focus {
   outline: none;
   border-color: #1db954;
@@ -190,7 +190,7 @@ canvas {
 ========================= */
 
 .album-card {
-  flex: 0 0 auto;          /* 👈 CRÍTICO */
+  flex: 0 0 auto;          
   width: 160px;
 
   display: flex;
@@ -220,11 +220,19 @@ canvas {
   display: block;
   font-size: 0.9rem;
   color: #ffffff;
+  
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .album-card span {
   font-size: 0.8rem;
   color: #b3b3b3;
+
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .album-card small {
@@ -237,39 +245,38 @@ canvas {
    TOP TRACKS LIST (TABELA)
 ========================= */
 
-/* Cabeçalho */
+
 .top-tracks-header {
     display: flex;
     font-size: 0.75rem;
     color: #b3b3b3;
-    padding: 8px 16px 8px 16px; /* Ajusta o padding para alinhar com o item */
+    padding: 8px 16px 8px 16px;
     border-bottom: 1px solid #2a2a2a;
     font-weight: 500;
 }
 
-/* Coluna Principal (Track Name / Artist) - Ocupa a maior parte do espaço */
 .header-track-info {
     flex-grow: 1; 
 }
 
-/* Colunas secundárias (Álbum e Plays) */
+
 .header-album, .header-plays {
-    flex-basis: 120px; /* Largura fixa */
+    flex-basis: 120px; 
     text-align: right;
     margin-left: 16px;
     flex-shrink: 0;
 }
 .header-album {
-    flex-basis: 150px; /* Álbum pode ser um pouco maior */
+    flex-basis: 150px; 
 }
 
 
-/* Item Individual da Lista */
+
 .track-item {
     display: flex;
     align-items: center;
     padding: 10px 16px;
-    border-bottom: 1px solid #1f1f1f; /* Linha de separação mais sutil */
+    border-bottom: 1px solid #1f1f1f; 
     transition: background-color 0.2s;
 }
 
@@ -277,12 +284,10 @@ canvas {
     background-color: #121212;
 }
 
-
-/* Bloco de Imagem e Texto (Track Info) */
 .track-info {
     display: flex;
     align-items: center;
-    flex-grow: 1; /* Ocupa o espaço restante */
+    flex-grow: 1;
     color: #ffffff;
 }
 
@@ -297,7 +302,7 @@ canvas {
 .track-text {
     display: flex;
     flex-direction: column;
-    min-width: 0; /* Permite o texto ser truncado se necessário */
+    min-width: 0; 
 }
 
 .track-title {
@@ -314,9 +319,9 @@ canvas {
 }
 
 
-/* Colunas de Dados */
+
 .track-album, .track-plays {
-    flex-basis: 150px; /* Alinha com .header-album */
+    flex-basis: 150px; 
     text-align: right;
     font-size: 0.9rem;
     color: #b3b3b3;
@@ -324,7 +329,7 @@ canvas {
     flex-shrink: 0;
 }
 .track-plays {
-    flex-basis: 120px; /* Alinha com .header-plays */
+    flex-basis: 120px; 
     font-weight: 600;
     color: #ffffff;
 }
