@@ -1,29 +1,36 @@
-function buildRangeFilter(range) {
-  if (!range) return null;
+function getDateRange(range) {
+  if (!range) return { from: null, to: null };
 
   const now = new Date();
-  let from = new Date();
+  let from = new Date(now);
+  let to = new Date(now);
 
   switch (range) {
     case "day":
-      // Últimas 24 horas
       from.setDate(now.getDate() - 1);
       break;
     case "week":
-      // Últimos 7 dias
       from.setDate(now.getDate() - 7);
       break;
     case "month":
-      // Últimos 30/31 dias (Um mês atrás, mantendo o dia do mês)
-      from.setMonth(now.getMonth() - 1); 
+      from.setMonth(now.getMonth() - 1);
       break;
     case "year":
-      // Últimos 365 dias (Um ano atrás)
       from.setFullYear(now.getFullYear() - 1);
       break;
     default:
-      return null;
+      return { from: null, to: null };
   }
+
+  from.setHours(0, 0, 0, 0);
+  to.setHours(0, 0, 0, 0);
+
+  return { from, to };
+}
+
+function buildRangeFilter(range) {
+  const { from } = getDateRange(range);
+  if (!from) return null;
 
   const fromUnix = Math.floor(from.getTime() / 1000);
   return {
@@ -32,4 +39,26 @@ function buildRangeFilter(range) {
   };
 }
 
-module.exports = { buildRangeFilter };
+function fillMissingDates(rows, range) {
+    const { from, to } = getDateRange(range); 
+
+    if (!from || !to) return rows; 
+
+    const result = {};
+    let current = new Date(from);
+    
+    while (current <= to) {
+        const dayString = current.toISOString().substring(0, 10); 
+        result[dayString] = { day: dayString, plays: 0 };
+        
+        current.setDate(current.getDate() + 1); 
+    }
+    
+    rows.forEach(row => {
+        result[row.day] = row;
+    });
+
+    return Object.values(result).sort((a, b) => (a.day > b.day ? 1 : -1));
+}
+
+module.exports = { buildRangeFilter, getDateRange, fillMissingDates };

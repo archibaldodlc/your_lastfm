@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const db = require("./db");
 const path = require("path");
-const { buildRangeFilter } = require("./utils/dateRange");
+const { buildRangeFilter, fillMissingDates } = require("./utils/dateRange");
 
 
 const app = express();
@@ -72,7 +72,6 @@ app.get("/api/top-tracks", (req, res) => {
   res.json(rows);
 });
 
-
 app.get("/api/plays-per-day", (req, res) => {
   const { year, month, range } = req.query;
 
@@ -93,9 +92,13 @@ app.get("/api/plays-per-day", (req, res) => {
     ORDER BY day
   `).all(...(filter?.params || []));
 
+  if (range) {
+    const filledRows = fillMissingDates(rows, range);
+    return res.json(filledRows);
+  }
+
   res.json(rows);
 });
-
 
 
 app.get("/api/summary", (req, res) => {
@@ -144,11 +147,13 @@ app.get("/api/top-albums", async (req, res) => {
     filter = buildDateFilter(year, month);
   }
 
+  const filterClause = filter.where ? `AND ${filter.where}` : '';
+  
   const albums = db.prepare(`
     SELECT artist, album, album_image, COUNT(*) plays
     FROM scrobbles
     WHERE album IS NOT NULL
-    ${filter.where ? `AND ${filter.where}` : ""}
+    ${filterClause} 
     GROUP BY artist, album
     ORDER BY plays DESC
     LIMIT 12
