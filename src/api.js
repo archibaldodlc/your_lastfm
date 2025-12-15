@@ -122,18 +122,19 @@ app.get("/api/summary", (req, res) => {
   `).get(...(filter?.params || []));
 
   const totalSeconds = row.totalPlays * AVG_TRACK_SECONDS;
-  const hours = (totalSeconds / 3600).toFixed(1);
+  
+  const totalMinutes = Math.round(totalSeconds / 60); 
+  
   const avgPerDay = row.days
     ? (row.totalPlays / row.days).toFixed(1)
     : 0;
 
   res.json({
     totalPlays: row.totalPlays,
-    totalHours: hours,
+    totalMinutes: totalMinutes,
     avgPerDay
   });
 });
-
 
 const { ensureAlbumCover } = require("./services/albumCoverCache");
 

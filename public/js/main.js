@@ -12,7 +12,7 @@ function reload() {
     canvasId: "artists",
     labelKey: "artist",
     valueKey: "plays",
-    label: "Escutado"
+    label: "Ouvido"
   });
 
   loadChart({
@@ -20,7 +20,7 @@ function reload() {
     canvasId: "tracks",
     labelKey: "track",
     valueKey: "plays",
-    label: "Escutou"
+    label: "Ouvido"
   });
 
   loadChart({
