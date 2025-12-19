@@ -11,7 +11,7 @@ export async function loadAlbums() {
     div.className = "album-card";
 
     div.innerHTML = `
-      <img src="${a.album_image || 'https://via.placeholder.com/300'}">
+      <img src="${a.album_image || 'https://www.beatstars.com/assets/img/placeholders/playlist-placeholder.svg'}">
       <strong>${a.album}</strong>
       <span>${a.artist}</span>
       <small>${a.plays} plays</small>

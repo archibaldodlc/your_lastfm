@@ -15,6 +15,15 @@ db.prepare(`
   )
 `).run();
 
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS artists (
+    artist TEXT PRIMARY KEY,
+    artist_image TEXT,
+    updated_at INTEGER
+  )
+`).run();
+
+
 try {
   db.prepare(`
     ALTER TABLE scrobbles ADD COLUMN album_image TEXT

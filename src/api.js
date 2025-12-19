@@ -3,7 +3,8 @@ const cors = require("cors");
 const db = require("./db");
 const path = require("path");
 const { buildRangeFilter, fillMissingDates } = require("./utils/dateRange");
-
+const { ensureAlbumCover } = require("./services/albumCoverCache");
+const { ensureArtistImage } = require("./services/artistImageCache");
 
 const app = express();
 app.use(cors());
@@ -27,47 +28,52 @@ function buildDateFilter(year, month) {
   return { where, params };
 }
 
-
-app.get("/api/top-artists", (req, res) => {
-  const { year, month, range } = req.query;
-
-  let filter;
-  if (range) {
-    filter = buildRangeFilter(range);
-  } else {
-    filter = buildDateFilter(year, month);
-  }
-
+app.get("/api/top-artists", async (req, res) => {
   const rows = db.prepare(`
     SELECT artist, COUNT(*) plays
     FROM scrobbles
-    ${filter.where ? `WHERE ${filter.where}` : ""}
     GROUP BY artist
     ORDER BY plays DESC
     LIMIT 10
-  `).all(...(filter?.params || []));
+  `).all();
+
+  for (const r of rows) {
+    r.image = await ensureArtistImage(r.artist);
+  }
 
   res.json(rows);
 });
 
-app.get("/api/top-tracks", (req, res) => {
-  const { year, month, range } = req.query;
 
-  let filter;
-  if (range) {
-    filter = buildRangeFilter(range);
-  } else {
-    filter = buildDateFilter(year, month);
-  }
+app.get("/api/top-tracks", async (req, res) => {
+  const { year, month, range } = req.query;
+  const AVG_TRACK_SECONDS = 180;
+
+  const filter = range
+    ? buildRangeFilter(range)
+    : buildDateFilter(year, month);
 
   const rows = db.prepare(`
-    SELECT track, artist, COUNT(*) plays
+    SELECT
+      track,
+      artist,
+      album,
+      album_image,
+      COUNT(*) plays,
+      COUNT(*) * ? total_seconds
     FROM scrobbles
-    ${filter.where ? `WHERE ${filter.where}` : ""}
-    GROUP BY track, artist
+    WHERE album IS NOT NULL
+    ${filter.where ? `AND ${filter.where}` : ""}
+    GROUP BY track, artist, album
     ORDER BY plays DESC
-    LIMIT 10
-  `).all(...(filter?.params || []));
+    LIMIT 20
+  `).all(AVG_TRACK_SECONDS, ...(filter.params || []));
+
+  for (const row of rows) {
+    if (!row.album_image) {
+      row.album_image = await ensureAlbumCover(row.artist, row.album);
+    }
+  }
 
   res.json(rows);
 });
@@ -135,8 +141,6 @@ app.get("/api/summary", (req, res) => {
     avgPerDay
   });
 });
-
-const { ensureAlbumCover } = require("./services/albumCoverCache");
 
 app.get("/api/top-albums", async (req, res) => {
   const { year, month, range } = req.query;
