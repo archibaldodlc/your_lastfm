@@ -1,50 +1,101 @@
 require("dotenv").config();
+const axios = require("axios");
 const db = require("./db");
-const { getRecentTracks } = require("./lastfm");
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+const CONFIG = {
+  API_URL: "https://ws.audioscrobbler.com/2.0/",
+  PAGE_LIMIT: 5,          
+  RETRY_DELAY: 3000,       
+  REQUEST_DELAY: 1200,     
+  PER_PAGE: 200
+};
 
-const insert = db.prepare(`
-  INSERT OR IGNORE INTO scrobbles
-  (artist, track, album, played_at)
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const insertScrobble = db.prepare(`
+  INSERT OR IGNORE INTO scrobbles (artist, track, album, played_at)
   VALUES (?, ?, ?, ?)
 `);
 
-async function sync() {
-  let page = 1;
-  let totalPages = 1;
-  let inserted = 0;
+const runSyncTransaction = db.transaction((tracks) => {
+  let count = 0;
+  for (const track of tracks) {
+    if (!track.date) continue;
 
-  console.log("Iniciando sync...");
+    const result = insertScrobble.run(
+      track.artist["#text"],
+      track.name,
+      track.album["#text"] || null,
+      Number(track.date.uts)
+    );
+    if (result.changes > 0) count++;
+  }
+  return count;
+});
 
-  do {
-    console.log(`Página ${page}`);
+async function fetchLastfmPage(page, retries = 3) {
+  try {
+    const { data } = await axios.get(CONFIG.API_URL, {
+      timeout: 10000,
+      params: {
+        method: "user.getrecenttracks",
+        user: process.env.LASTFM_USERNAME,
+        api_key: process.env.LASTFM_API_KEY,
+        format: "json",
+        limit: CONFIG.PER_PAGE,
+        page
+      }
+    });
 
-    const data = await getRecentTracks(page);
-    totalPages = Number(data["@attr"].totalPages);
+    if (data.error) throw new Error(data.message);
+    return data.recenttracks;
 
-    for (const track of data.track) {
-      if (!track.date) continue;
-
-      const res = insert.run(
-        track.artist["#text"],
-        track.name,
-        track.album["#text"] || null,
-        Number(track.date.uts)
-      );
-
-      if (res.changes) inserted++;
+  } catch (err) {
+    if (retries > 0) {
+      console.warn(`⚠️ Erro na página ${page}. Tentando novamente em ${CONFIG.RETRY_DELAY / 1000}s...`);
+      await sleep(CONFIG.RETRY_DELAY);
+      return fetchLastfmPage(page, retries - 1);
     }
-
-    page++;
-    await sleep(1200);
-  } while (page <= totalPages && page <= 5);
-
-  console.log(`Sync OK — ${inserted} novos scrobbles`);
+    throw err;
+  }
 }
 
-sync().catch(err => {
-  console.error("Falha no sync:", err.message);
-});
+async function sync() {
+  console.log("🚀 Iniciando sincronização com Last.fm...");
+  
+  let page = 1;
+  let totalPages = 1;
+  let totalInserted = 0;
+
+  try {
+    do {
+      console.log(`📥 Baixando página ${page}...`);
+      const data = await fetchLastfmPage(page);
+      
+      totalPages = Number(data["@attr"].totalPages);
+      const tracks = data.track || [];
+
+      const insertedInPage = runSyncTransaction(tracks);
+      totalInserted += insertedInPage;
+
+      console.log(`✅ Página ${page} processada. (${insertedInPage} novos)`);
+
+      if (insertedInPage === 0 && page > 1) {
+         console.log("ℹ️ Nenhuma música nova encontrada nesta página. Parando...");
+         break;
+      }
+
+      if (page >= CONFIG.PAGE_LIMIT) break;
+
+      page++;
+      await sleep(CONFIG.REQUEST_DELAY);
+
+    } while (page <= totalPages);
+
+    console.log(`\n✨ Sync finalizado! ${totalInserted} novos scrobbles adicionados.`);
+  } catch (err) {
+    console.error("\n❌ Falha crítica no sync:", err.message);
+  }
+}
+
+sync();
