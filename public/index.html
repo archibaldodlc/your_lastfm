@@ -25,7 +25,7 @@
   <div id="global-loading">
     <div class="spinner-border text-light" role="status"></div>
   </div>
-
+  
 
   <nav class="navbar navbar-dark bg-black px-4">
     <a class="navbar-brand fs-3" href="#">Your LastFM</a>
@@ -37,6 +37,17 @@
   </nav>
 
   <main class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="text-white mb-0">Dashboard</h3>
+
+      <button
+        id="force-sync-btn"
+        class="btn btn-sync text-green"
+      >
+        <i class="mdi mdi-sync text-green"></i>
+        Forçar sync
+      </button>
+    </div>
 
     <!-- Filters -->
     <section class="filters-bar mb-4">
@@ -156,7 +167,7 @@
 
       <div class="col-md-12">
         <div class="card bg-light text-dark shadow-sm">
-          <div class="card-body">
+          <div class="card-body text-light">
             <i class="mdi mdi-chart-line me-1 text-green"></i>
             Plays por Dia
             <canvas id="daily"></canvas>
