@@ -1,14 +1,11 @@
 #!/bin/sh
 
 mkdir -p /app/data
+[ ! -f /app/data/stats.db ] && touch /app/data/stats.db
 
-if [ ! -f /app/data/stats.db ]; then
-    touch /app/data/stats.db
-    echo "🗄️ Arquivo stats.db criado com sucesso."
-fi
-
-echo "🔄 Iniciando sincronização de scrobbles..."
+echo "🔄 Passo 1: Sincronizando scrobbles (index.js)..."
 node src/index.js
 
-echo "🚀 Iniciando API Web..."
-exec node src/api.js
+echo "🚀 Passo 2: Subindo API em background (api.js)..."
+
+pm2-runtime start src/api.js --name "minha-api"
