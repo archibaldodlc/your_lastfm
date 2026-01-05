@@ -37,23 +37,89 @@ function buildDateFilter(year, month) {
 
 const getActiveFilter = (query) => {
   const { year, month, range } = query;
-  return range ? buildRangeFilter(range) : buildDateFilter(year, month);
-};
+  let where = "";
+  const params = [];
 
-app.get("/api/top-artists", async (req, res) => {
-  const rows = db.prepare(`
-    SELECT artist, COUNT(*) plays
-    FROM scrobbles
-    GROUP BY artist
-    ORDER BY plays DESC
-    LIMIT 10
-  `).all();
+  if (range) {
+    const now = new Date();
+    const past = new Date();
+    let isValidRange = true;
 
-  for (const r of rows) {
-    r.image = await ensureArtistImage(r.artist);
+    switch (range) {
+      case 'day':
+        past.setDate(now.getDate() - 1);
+        break;
+      case 'week':
+        past.setDate(now.getDate() - 7);
+        break;
+      case 'month':
+        past.setMonth(now.getMonth() - 1);
+        break;
+      case 'year':
+        past.setFullYear(now.getFullYear() - 1);
+        break;
+      default:
+        isValidRange = false;
+    }
+
+    if (isValidRange) {
+      where = "played_at >= ?";
+      params.push(Math.floor(past.getTime() / 1000));
+      return { where, params };
+    }
   }
 
-  res.json(rows);
+  const cleanYear = year ? String(year).split('?')[0] : null;
+  const cleanMonth = month ? String(month).split('?')[0] : null;
+
+  if (cleanYear) {
+    where += "strftime('%Y', played_at, 'unixepoch') = ?";
+    params.push(cleanYear);
+  }
+
+  if (cleanMonth) {
+    if (where) where += " AND ";
+    where += "strftime('%m', played_at, 'unixepoch') = ?";
+    params.push(cleanMonth.padStart(2, "0"));
+  }
+
+  return { where: where || null, params };
+};
+
+
+app.get("/api/top-artists", async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+
+  try {
+    const filter = getActiveFilter(req.query);
+    
+    console.log(`[Top Artists] Filter: "${filter.where}" | Params: ${filter.params}`);
+
+    const query = `
+      SELECT artist, COUNT(*) plays
+      FROM scrobbles
+      ${filter.where ? `WHERE ${filter.where}` : ""}
+      GROUP BY artist
+      ORDER BY plays DESC
+      LIMIT 10
+    `;
+
+    const rows = db.prepare(query).all(...filter.params);
+
+    for (const r of rows) {
+      try {
+        r.image = await ensureArtistImage(r.artist);
+      } catch {
+        r.image = null;
+      }
+    }
+
+    res.json(rows);
+
+  } catch (err) {
+    console.error("[ERROR Top Artists]", err);
+    res.status(500).json({ error: "Internal error" });
+  }
 });
 
 app.get("/api/top-tracks", async (req, res) => {
