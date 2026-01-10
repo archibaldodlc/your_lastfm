@@ -1,5 +1,6 @@
 require("dotenv").config();
-const { sync } = require("./index");
+const { sync } = require("./sync");
+
 
 (async () => {
   console.log("🚀 Running FULL initial sync...");
