@@ -3,7 +3,7 @@
 
 # Your LastFM
 
-A containerized Node.js application that synchronizes scrobbles from **Last.fm** and **Spotify**, stores them in a local **SQLite** database, and serves a web dashboard.
+A containerized Node.js application that synchronizes scrobbles from **Last.fm**, stores them in a local **SQLite** database, and serves a web dashboard.
 
 ![](https://i.imgur.com/4oiHM9D.png)
 
