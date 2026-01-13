@@ -1,8 +1,7 @@
 const db = require("../db");
-const { fetchSpotifyArtistImage } = require("./spotifyArtistImage");
+const { fetchArtistImage } = require("./deezerArtistImage"); 
 
 async function ensureArtistImage(artist) {
-
   const cached = db.prepare(`
     SELECT artist_image
     FROM artists
@@ -13,7 +12,7 @@ async function ensureArtistImage(artist) {
     return cached.artist_image;
   }
 
-  const image = await fetchSpotifyArtistImage(artist);
+  const image = await fetchArtistImage(artist);
 
   if (!image) {
     return null;
