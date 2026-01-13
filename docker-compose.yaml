@@ -4,10 +4,8 @@ services:
   app:
     build: .
     container_name: your_lastfm
-    env_file:
-      - .env
     volumes:
-      - ./data:/app/data
+      - /mnt/portainer/your_lastfm/data:/app/data
     ports:
       - "1533:1533"
     restart: unless-stopped
