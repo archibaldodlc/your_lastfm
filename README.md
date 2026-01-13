@@ -11,7 +11,7 @@ A containerized Node.js application that synchronizes scrobbles from **Last.fm**
 
 ## Project
 
-**Your LastFM** is a Node.js application designed to **automatically synchronize music scrobbles** between Last.fm and Spotify. It preserves your listening history in a local SQLite database and serves a web interface for data visualization.
+**Your LastFM** is a Node.js application designed to **automatically synchronize music scrobbles** from Last.fm. It preserves your listening history in a local SQLite database and serves a web interface for data visualization.
 
 The project is fully containerized with **Docker**, using an automated entrypoint to handle database initialization and sequential execution (Syncing first, then launching the Web API). It also utilizes **PM2** as a process manager inside the container to ensure the web service remains active and resilient.
 
